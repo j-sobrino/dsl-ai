@@ -15,6 +15,9 @@ venv/
 # PDF files
 *.pdf
 
+# But keep this specific PDF
+!RELLENO-personal-loans-sample-agreement.pdf
+
 # VS Code settings
 .vscode/
 
