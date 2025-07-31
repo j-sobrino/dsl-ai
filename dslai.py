@@ -1,7 +1,8 @@
-
 import pdfplumber
 import openai
 import os
+import json
+import re
 
 from dotenv import load_dotenv
 
@@ -33,10 +34,6 @@ Return only the result as valid JSON.
 Contract text:
 {contract_text}
 """
-    # response = client.chat.completions.create(
-    #     model="gpt-3.5-turbo",
-    #     messages=messages
-    # )
     client = openai.OpenAI(
         api_key=os.getenv("OPENAI_API_KEY")
     )
@@ -51,14 +48,27 @@ Contract text:
         max_tokens=200
     )
 
-    return response.choices[0].message.content
+    # Parse the response to extract JSON
+    response_text = response.choices[0].message.content
+    return extract_json_from_gpt_response(response_text)
+
+def extract_json_from_gpt_response(response_text):
+    # Use regex to find the JSON block
+    match = re.search(r"\{[\s\S]*\}", response_text)
+    if match:
+        json_str = match.group(0)
+        try:
+            return json.loads(json_str)
+        except json.JSONDecodeError:
+            return None
+    return None
 
 def main():
     pdf_path = "RELLENO-personal-loans-sample-agreement.pdf"
     contract_text = extract_text_from_pdf(pdf_path)
     result = query_openai_with_contract_text(contract_text)
-    print("🔍 Extracted Fields:")
-    print(result)
+    parsed_result = extract_json_from_gpt_response(result)
+    print(parsed_result)
 
 if __name__ == "__main__":
     main()
